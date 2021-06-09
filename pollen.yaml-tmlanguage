@@ -40,20 +40,20 @@ patterns:
   # Match them before the more general form to make sure they stand out.
   - match: "◊\\(\\s*([^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+)\\s*\\)"
     captures:
-      1:
+      "1":
         name: variable.language.pollen
 
   # You can also write them ◊like-this with no brackets or braces.
   - match: "◊([^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+)[\\s]"
     captures:
-      1:
+      "1":
         name: variable.language.pollen
 
   # And there ◊|this form| when go out of your way to use a name that does not
   # fit into already lenient syntax of Racket identifiers.
   - match: "◊\\|([^\\|]*)\\|"
     captures:
-      1:
+      "1":
         name: variable.language.pollen
 
   # Pollen tags normally look ◊like-this{with some text in them}.
@@ -62,7 +62,7 @@ patterns:
   - begin: "◊[^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+(?=[\\{\\[\\(])"
     end:   "\\s"
     beginCaptures:
-      0:
+      "1":
         name: entity.name.tag.pollen
     patterns:
       - include: "#racket_args"
