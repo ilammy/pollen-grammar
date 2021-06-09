@@ -1,0 +1,119 @@
+# Meta-grammar:
+# http://manual.macromates.com/en/language_grammars
+
+name: Pollen
+scopeName: text.pollen
+fileTypes:
+  - pm
+  - ptree
+  - pp
+  - p
+
+# Pollen files start with Racket's language selector.
+#
+#   #lang pollen
+#
+firstLineMatch: "^#lang\\s+pollen$"
+
+# Patterns are tested in specified order until a match is found.
+patterns:
+
+  # ◊; single-line comment
+  # Take care to *avoid* matching multiline comments with this.
+  - match: "◊;[^\\{].*"
+    name: comment.line.semicolon.pollen
+
+  # ◊;{
+  #   multi-line comment
+  #   {
+  #     delimited {with braces}
+  #     {which must be {balanced}}
+  #   }
+  # }
+  - begin: "◊;"
+    end:   "\\s"
+    name: comment.multiline.pollen
+    patterns:
+      - include: "#braces"
+
+  # Singular identifiers ◊(like-this) are typically used to insert constants.
+  # Match them before the more general form to make sure they stand out.
+  - match: "◊\\(\\s*([^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+)\\s*\\)"
+    captures:
+      1:
+        name: variable.language.pollen
+
+  # You can also write them ◊like-this with no brackets or braces.
+  - match: "◊([^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+)[\\s]"
+    captures:
+      1:
+        name: variable.language.pollen
+
+  # And there ◊|this form| when go out of your way to use a name that does not
+  # fit into already lenient syntax of Racket identifiers.
+  - match: "◊\\|([^\\|]*)\\|"
+    captures:
+      1:
+        name: variable.language.pollen
+
+  # Pollen tags normally look ◊like-this{with some text in them}.
+  # They can also ◊have[optional arguments that are Racket code]{in brackets}.
+  # Or even ◊no["braces whatsoever after brackets"].
+  - begin: "◊[^\\s\\{\\}\\(\\)\\[\\]#\\|,\"]+(?=[\\{\\[\\(])"
+    end:   "\\s"
+    beginCaptures:
+      0:
+        name: entity.name.tag.pollen
+    patterns:
+      - include: "#racket_args"
+      - include: "#braces"
+
+  # Pollen allows to include arbitrary Racket code within ◊(...).
+  # For example:
+  #
+  # ◊(define (fact n)
+  #    (let loop ([res 1] [n n])
+  #      (if (= n 0)
+  #          res
+  #          (loop (* res n) (- n 1)) ) ) )
+  #
+  # Highlight pollen/core definitions that are imported into every Pollen source file.
+  - begin: "◊\\("
+    end:   "\\)"
+    patterns:
+      # Metas
+      - name: entity.name.definition.pollen
+        match: "\\b(define-meta)\\b"
+      # Splicing
+      - name: keyword.other.pollen
+        match: "\\b(@|when/splice|for/splice)\\b"
+      # Data helpers
+      - name: keyword.other.pollen
+        match: "\\b(get-doc|get-metas|select\\*|select-from-doc|select-from-metas|select)\\b"
+      # Parameters
+      - name: keyword.other.pollen
+        match: "\\b(current-metas)\\b"
+      # Everything else should be understood as Racket code.
+      - include: source.racket
+
+  # Anything else with ◊ is an error. Make sure to point those out.
+  - match: "◊[^\\s\\{\\}\\[\\]\\(\\)]*"
+    name: invalid.illegal.pollen
+
+# Reusable grammar framents.
+repository:
+
+  # Pollen text nested {within braces}
+  braces:
+    begin: "\\{"
+    end:   "\\}"
+    patterns:
+      - include: "#braces"
+      - include: "$self"
+
+  # Racket arguments for ◊pollen-tag[#:within "brackets"]
+  racket_args:
+    begin: "\\["
+    end:   "\\]"
+    patterns:
+      - include: source.racket
